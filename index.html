@@ -90,24 +90,31 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .home-btn:hover{color:var(--text);border-color:var(--accent);background:var(--accent-glow);}
 .home-btn svg{flex-shrink:0;}
 
-/* ===== VIEW TOGGLE ===== */
-.toolbar{display:flex;align-items:center;justify-content:space-between;margin:1.5rem 0 0;gap:.75rem;}
-.view-toggle{display:flex;background:var(--surface);border-radius:10px;padding:3px;border:1px solid var(--border);flex-shrink:0;}
-.vt-btn{background:none;border:none;color:var(--dim);padding:7px 14px;font-size:.78rem;cursor:pointer;border-radius:8px;font-family:inherit;font-weight:600;letter-spacing:.03em;transition:all .2s;text-transform:uppercase;}
-.vt-btn:hover{color:var(--muted);}
-.vt-btn.active{color:var(--text);background:var(--surface2);box-shadow:0 2px 8px rgba(0,0,0,.2);}
+/* ===== VIEW TOGGLE SWITCH ===== */
+.pattern-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;}
+.view-toggle{display:flex;align-items:center;gap:.5rem;flex-shrink:0;margin-top:.45rem;}
+.vt-label{font-size:.68rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);transition:color .2s;}
+.vt-label.active{color:var(--text);}
+.toggle-track{position:relative;width:40px;height:22px;background:var(--border);border-radius:99px;cursor:pointer;transition:background .3s;flex-shrink:0;}
+.toggle-track.on{background:var(--accent);}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .3s cubic-bezier(.4,.0,.2,1);box-shadow:0 1px 3px rgba(0,0,0,.3);}
+.toggle-track.on .toggle-thumb{transform:translateX(18px);}
 
 /* ===== TABS ===== */
-.tabs{display:flex;gap:2px;background:var(--surface);border-radius:12px;padding:4px;border:1px solid var(--border);flex:1;}
+.tabs{display:flex;gap:2px;background:var(--surface);border-radius:12px;padding:4px;border:1px solid var(--border);margin:1.5rem 0 0;}
 .tab{flex:1;background:none;border:none;color:var(--dim);padding:10px 14px;font-size:.88rem;cursor:pointer;border-radius:9px;font-family:inherit;font-weight:500;transition:all .2s;text-align:center;}
 .tab:hover{color:var(--muted);}
 .tab.active{color:var(--text);background:var(--surface2);box-shadow:0 2px 8px rgba(0,0,0,.2);}
+
+/* ===== SMOOTH TRANSITIONS ===== */
+.tab-content{padding:1.5rem 0;}
+.content-fade{animation:contentFade .35s ease both;}
+@keyframes contentFade{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 
 /* ===== SCROLL MODE SECTIONS ===== */
 .scroll-section{margin-bottom:2.5rem;}
 .scroll-section-title{display:flex;align-items:center;gap:.6rem;font-family:'Space Grotesk',sans-serif;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent2);margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid var(--border);}
 .scroll-section-title svg{flex-shrink:0;opacity:.6;}
-.tab-content{padding:1.5rem 0;}
 
 /* ===== CONTENT ===== */
 .explanation{line-height:1.85;color:var(--muted);font-size:.97rem;}
@@ -322,10 +329,14 @@ function renderPattern(p){
   const catColorMap = {SOLID:'solid',Creational:'creational',Structural:'structural',Behavioral:'behavioral',Architectural:'arch',Concurrency:'concurrency'};
   const cls = catColorMap[p.category]||'accent';
 
-  // View toggle
+  // Toggle switch
+  const isTabsMode = viewMode === 'tabs';
   const toggleHtml = `<div class="view-toggle">
-    <button class="vt-btn ${viewMode==='scroll'?'active':''}" onclick="setViewMode('scroll')">Scroll</button>
-    <button class="vt-btn ${viewMode==='tabs'?'active':''}" onclick="setViewMode('tabs')">Tabs</button>
+    <span class="vt-label ${!isTabsMode?'active':''}">Scroll</span>
+    <div class="toggle-track ${isTabsMode?'on':''}" onclick="setViewMode(viewMode==='scroll'?'tabs':'scroll')">
+      <div class="toggle-thumb"></div>
+    </div>
+    <span class="vt-label ${isTabsMode?'active':''}">Tabs</span>
   </div>`;
 
   let tabsHtml = '';
@@ -334,7 +345,7 @@ function renderPattern(p){
     if(p.code2) tabList.push('code2');
     tabList.push('proscons','diagram');
     const labels = {overview:'Overview',code:p.codeLabel||'Code',code2:p.code2Label||'Code 2',proscons:'Pros & Cons',diagram:'Diagram'};
-    tabsHtml = '<div class="tabs">' + tabList.map(t =>
+    tabsHtml = '<div class="tabs fade-up fade-up-d1">' + tabList.map(t =>
       `<button class="tab ${t===currentTab?'active':''}" data-tab="${t}" onclick="currentTab='${t}';switchTab();">${labels[t]}</button>`
     ).join('') + '</div>';
   }
@@ -342,14 +353,14 @@ function renderPattern(p){
   m.innerHTML = `
     <div class="pattern-header fade-up">
       <span class="pattern-cat badge-${cls}" style="background:var(--${cls});color:#000;font-weight:800;">${p.category}</span>
-      <h1 class="pattern-title">${p.name}</h1>
+      <div class="pattern-title-row">
+        <h1 class="pattern-title">${p.name}</h1>
+        ${toggleHtml}
+      </div>
       <p class="pattern-short">${p.description}</p>
     </div>
-    <div class="toolbar fade-up fade-up-d1">
-      ${viewMode==='tabs'?tabsHtml:'<div></div>'}
-      ${toggleHtml}
-    </div>
-    <div class="tab-content fade-up fade-up-d2" id="tabContent"></div>
+    ${tabsHtml}
+    <div class="tab-content content-fade" id="tabContent"></div>
   `;
 
   if(viewMode === 'scroll'){
@@ -360,10 +371,19 @@ function renderPattern(p){
 }
 
 function setViewMode(mode){
-  viewMode = mode;
-  if(currentPattern){
-    renderPattern(DATA[currentPattern]);
+  if(mode === viewMode) return;
+  const tc = document.getElementById('tabContent');
+  if(tc){
+    tc.style.opacity = '0';
+    tc.style.transform = 'translateY(10px)';
+    tc.style.transition = 'opacity .2s, transform .2s';
   }
+  setTimeout(() => {
+    viewMode = mode;
+    if(currentPattern){
+      renderPattern(DATA[currentPattern]);
+    }
+  }, 200);
 }
 
 function buildMacWindow(code, filename){
@@ -446,23 +466,32 @@ function switchTab(){
   const tc = document.getElementById('tabContent');
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === currentTab));
 
-  if(currentTab === 'overview'){
-    let useCasesH = '';
-    if(p.useCases && p.useCases.length){
-      useCasesH = '<div class="use-cases"><div class="use-case-title">Common Use Cases</div>';
-      p.useCases.forEach(u => useCasesH += '<div class="use-case-item">'+u+'</div>');
-      useCasesH += '</div>';
+  // Smooth fade
+  tc.style.opacity = '0';
+  tc.style.transform = 'translateY(8px)';
+  tc.style.transition = 'opacity .18s, transform .18s';
+
+  setTimeout(() => {
+    if(currentTab === 'overview'){
+      let useCasesH = '';
+      if(p.useCases && p.useCases.length){
+        useCasesH = '<div class="use-cases"><div class="use-case-title">Common Use Cases</div>';
+        p.useCases.forEach(u => useCasesH += '<div class="use-case-item">'+u+'</div>');
+        useCasesH += '</div>';
+      }
+      tc.innerHTML = '<div class="explanation">'+p.explanation+'</div>'+useCasesH;
+    } else if(currentTab === 'code' || currentTab === 'code2'){
+      const code = currentTab === 'code2' ? p.code2 : p.code;
+      const fname = currentTab === 'code2' ? (p.code2File||'Example2.java') : (p.codeFile||'Example.java');
+      tc.innerHTML = buildMacWindow(code, fname);
+    } else if(currentTab === 'proscons'){
+      tc.innerHTML = buildProsConsHtml(p);
+    } else if(currentTab === 'diagram'){
+      tc.innerHTML = '<div class="diagram-box"><pre>'+p.diagram+'</pre></div>';
     }
-    tc.innerHTML = '<div class="explanation">'+p.explanation+'</div>'+useCasesH;
-  } else if(currentTab === 'code' || currentTab === 'code2'){
-    const code = currentTab === 'code2' ? p.code2 : p.code;
-    const fname = currentTab === 'code2' ? (p.code2File||'Example2.java') : (p.codeFile||'Example.java');
-    tc.innerHTML = buildMacWindow(code, fname);
-  } else if(currentTab === 'proscons'){
-    tc.innerHTML = buildProsConsHtml(p);
-  } else if(currentTab === 'diagram'){
-    tc.innerHTML = '<div class="diagram-box"><pre>'+p.diagram+'</pre></div>';
-  }
+    tc.style.opacity = '1';
+    tc.style.transform = 'translateY(0)';
+  }, 180);
 }
 
 function copyCode(btn){
